@@ -13,7 +13,7 @@ ctxdb = ContextDB()
 @app.post("/ctxdb/contexts", response_model=BaseContext)
 def add_context(context: BaseContext):
     try:
-        context: Context = Context(input=context.input, output=context.output, context=encode(contex.input))
+        context: Context = Context(input=context.input, output=context.output, context=encode(context.input))
         new_id = ctxdb.add_context(context)
         return {
             "id": new_id,
