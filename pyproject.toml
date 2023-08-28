@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "ctxdb"
+version = "0.0.1"
+description = "A database for contexts"
+authors = ["Philip Solarz <philipsolarz@outlook.com>"]
+license = "Apache License"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+docarray = {extras = ["redis"], version = "^0.37.1"}
+requests = "^2.31.0"
+uvicorn = "^0.23.2"
+fastapi = "^0.103.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
