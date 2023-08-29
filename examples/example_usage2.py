@@ -1,5 +1,5 @@
 from ctxdb.client import ContextDBClient
-from ctxdb.common.models import BaseContext
+from ctxdb.common.models import BaseContext, Context
 from ctxdb.common.utils import encode
 
 
@@ -23,7 +23,7 @@ def create_sample_contexts(db_client):
     ]
 
     for input_text, output_text in sample_data:
-        context = BaseContext(input=input_text,
+        context = Context(input=input_text,
                               # embedding=encode(input_text),
                               output=output_text)
         db_client.add_context(context)

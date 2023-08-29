@@ -2,16 +2,19 @@ from docarray import BaseDoc
 from docarray.typing import AnyEmbedding, NdArray
 from docarray.documents import TextDoc
 from docarray import DocList
+from docarray.typing.url import TextUrl
 from typing import Optional
 
+class InputContext(TextDoc):
+    pass
 
 class BaseContext(BaseDoc):
     input: str
-    output: str
+    output: Optional[str]
 
 
 class Context(BaseContext):
-    context: NdArray[384]
+    context: Optional[NdArray[384]]
 
 """
 
