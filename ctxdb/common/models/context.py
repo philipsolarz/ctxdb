@@ -6,15 +6,23 @@ from docarray.typing.url import TextUrl
 from typing import Optional
 
 class InputContext(TextDoc):
-    pass
+    class Config:
+        orm_mode = True
+class Context(TextDoc):
+    class Config:
+        orm_mode = True
+    # context: Optional[NdArray[384]]
+    
+class OutputContext(TextDoc):
+    class Config:
+        orm_mode = True
 
 class BaseContext(BaseDoc):
     input: str
     output: Optional[str]
 
 
-class Context(BaseContext):
-    context: Optional[NdArray[384]]
+
 
 """
 

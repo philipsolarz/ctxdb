@@ -1,5 +1,5 @@
 # from ..models import Namespace, Workspace, Context
-from ctxdb.common.models import BaseContext, Context
+from ctxdb.common.models import Context
 # from ctxdb.server.core.config import settings
 # from docarray.index import RedisDocumentIndex, InMemoryExactNNIndex
 # from docarray.index import InMemoryExactNNIndex
@@ -53,12 +53,15 @@ class ContextDB:
         else:
             raise TypeError(f"{type(ctx_id)} is not supported")
 
+    def update_context(self, ctx_id: str, ctx: Context):
+        pass
+
     def search_context(self,
-                       query: Context,
-                       search_field: str = "context",
+                       ctx: Context,
+                       search_field: str = "embedding",
                        limit: int = 10):
-        print(query)
-        if isinstance(query, Context):
-            return self._ctx_idx.find(query.context, search_field, limit)
+        # print(ctx)
+        if isinstance(ctx, Context):
+            return self._ctx_idx.find(ctx.embedding, search_field, limit)
         else:
-            raise TypeError(f"{type(query)} is not supported")
+            raise TypeError(f"{type(ctx)} is not supported")

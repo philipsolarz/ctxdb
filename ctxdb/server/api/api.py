@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI, HTTPException
 from ctxdb.server.core import ContextDB
-from ctxdb.common.models import BaseContext, Context
+from ctxdb.common.models import InputContext, Context, OutputContext
 from ctxdb.common.utils import encode
 REDIS_HOST = os.environ["REDIS_HOST"]
 REDIS_PORT = os.environ["REDIS_PORT"]
@@ -10,56 +10,59 @@ app = FastAPI()
 ctxdb = ContextDB()
 
 
-@app.post("/ctxdb/contexts", response_model=Context)
-def add_context(context: Context):
+@app.post("/ctxdb/contexts")
+def add_context(input_ctx: InputContext):
+
     try:
-        context.context = encode(context.input)
-        # context: Context = Context(input=context.input, output=context.output, context=encode(context.input))
-        new_id = ctxdb.add_context(context)
-        return {
-            "id": new_id,
-            **context.dict()
-        }  # Assuming add_context returns a new id
+        ctx = Context.from_orm(input_ctx)
+        ctx.embedding = encode(ctx.text)
+        # print(ctx)
+        ctxdb.add_context(ctx)
+        return {"message": "Context added successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.get("/ctxdb/contexts/{idx}", response_model=Context)
+@app.get("/ctxdb/contexts/{idx}", response_model=OutputContext)
 def get_context(idx: str):
-    context = ctxdb.get_context(idx)
-    if context:
-        return context
-    else:
-        raise HTTPException(status_code=404, detail="Context not found")
+    try:
+        ctx = ctxdb.get_context(idx)
+        return ctx
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.delete("/ctxdb/contexts/{idx}")
 def delete_context(idx: str):
-    if ctxdb.delete_context(idx):
-        return {"message": "Context deleted successfully"}
-    else:
-        raise HTTPException(status_code=404, detail="Context not found")
-
-
-@app.put("/ctxdb/contexts/{idx}", response_model=Context)
-def update_context(idx: str, context: Context):
     try:
-        updated_context = ctxdb.update_context(idx, context.dict())
-        if updated_context:
-            return updated_context
-        else:
-            raise HTTPException(status_code=404, detail="Context not found")
+        ctxdb.delete_context(idx)
+        return {"message": "Context deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.post("/ctxdb/contexts/query", response_model=list[Context])
-def query_context(query: Context):
+
+@app.put("/ctxdb/contexts/{idx}")
+def update_context(idx: str, input_ctx: InputContext):
     try:
-        query_ctx = Context(input=query.input, context=encode(query.input))
-        # print(query_ctx)
-        contexts = ctxdb.search_context(query_ctx, "context")
-        # print(contexts)
-        return contexts
+        ctx = Context.from_orm(input_ctx)
+        ctx.embedding = encode(input_ctx.text)
+        ctxdb.update_context(idx, ctx)
+        return {"message": "Context updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/ctxdb/contexts/query")
+def query_context(input_ctx: InputContext):
+
+    try:
+        ctx = Context.from_orm(input_ctx)
+        ctx.embedding = encode(input_ctx.text)
+        contexts = ctxdb.search_context(ctx, "embedding")
+        print(type(contexts))
+        print(list(contexts.documents)[0].text)
+        print(contexts.scores)
+        return 200
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

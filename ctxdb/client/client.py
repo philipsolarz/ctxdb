@@ -1,15 +1,18 @@
-from typing import List, Union, Optional
-import json
-
+from typing import List, Optional
 import requests
+import logging
+from ctxdb.common.models import Context, InputContext
 
-from ctxdb.common.models import BaseContext, Context, InputContext
+logger = logging.getLogger(__name__)
 
+
+class ContextDBException(Exception):
+    """Base class for all exceptions raised by ContextDBClient."""
 
 
 class ContextDBClient:
     """
-    ContextDBClient    
+    ContextDBClient handles communication with the ContextDB database.
     """
 
     def __init__(self, db_name: str, db_host: str, db_port: int, db_user: str,
@@ -18,68 +21,64 @@ class ContextDBClient:
         self.auth = (db_user, db_password)
         self.headers = {'Content-Type': 'application/json'}
 
-    def add_context(self, context: Context) -> Union[None, str]:
+    def _make_request(self, method: str, endpoint: str, data: Optional[str] = None) -> requests.Response:
+        """Helper function for making HTTP requests."""
+        url = f"{self.base_url}/{endpoint}"
         try:
-            payload = context.json()
-            response = requests.post(f"{self.base_url}/contexts",
-                                     data=payload,
-                                     auth=self.auth,
-                                     headers=self.headers)
-            if response.status_code == 200:
-                return response.json().get('id')
-            else:
-                print(f"Failed to add context: {response.text}")
-                return None
-        except Exception as e:
-            print(f"Error while adding context: {e}")
+            response = requests.request(method=method, url=url, data=data,
+                                        auth=self.auth, headers=self.headers, timeout=30)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            logger.error(f"Request error: {e}")
+            raise ContextDBException(f"Request error: {e}") from e
+        return response
+
+    def add_context(self, input_ctx: InputContext) -> Optional[str]:
+        """Add context to the database."""
+        try:
+            payload = input_ctx.json()
+            response = self._make_request("POST", "contexts", payload)
+            return response.json()
+        except ContextDBException as e:
+            logger.error(f"Failed to add context: {e}")
             return None
 
     def get_context(self, context_id: str) -> Optional[Context]:
+        """Retrieve a context by ID."""
         try:
-            response = requests.get(f"{self.base_url}/contexts/{context_id}",
-                                    auth=self.auth)
-            if response.status_code == 200:
-                return Context.from_json(response.json())
-            else:
-                print(f"Failed to get context: {response.text}")
-                return None
-        except Exception as e:
-            print(f"Error while getting context: {e}")
+            response = self._make_request("GET", f"contexts/{context_id}")
+            return Context.from_json(response.json())
+        except ContextDBException as e:
+            logger.error(f"Failed to get context: {e}")
             return None
 
-    def update_context(self, context: Context) -> bool:
+    def update_context(self, input_ctx: InputContext) -> bool:
+        """Update an existing context."""
         try:
-            payload = context.json()
-            response = requests.put(f"{self.base_url}/contexts/{context.id}",
-                                    data=payload,
-                                    auth=self.auth,
-                                    headers=self.headers)
-            return response.status_code == 200
-        except Exception as e:
-            print(f"Error while updating context: {e}")
+            payload = input_ctx.json()
+            self._make_request("PUT", f"contexts/{input_ctx.id}", payload)
+            return True
+        except ContextDBException as e:
+            logger.error(f"Failed to update context: {e}")
             return False
 
     def delete_context(self, context_id: str) -> bool:
+        """Delete a context by ID."""
         try:
-            response = requests.delete(
-                f"{self.base_url}/contexts/{context_id}", auth=self.auth)
-            return response.status_code == 200
-        except Exception as e:
-            print(f"Error while deleting context: {e}")
+            self._make_request("DELETE", f"contexts/{context_id}")
+            return True
+        except ContextDBException as e:
+            logger.error(f"Failed to delete context: {e}")
             return False
 
-    def search_context(self, input_query: str) -> List[Context]:
+    def search_context(self, input_ctx: InputContext) -> List[Context]:
+        """Search for contexts using an InputContext object."""
+        results = []
         try:
-            query_ctx = Context(input=input_query)
-            response = requests.post(f"{self.base_url}/contexts/query",
-                                    data=query_ctx.json(),
-                                    auth=self.auth)
-            print(response.status_code)
-            if response.status_code == 200:
-                return [Context.parse_raw(ctx) for ctx in response.json()]
-            else:
-                print(f"Failed to search context: {response.text}")
-                return []
-        except Exception as e:
-            print(f"Error while searching context: {e}")
-            return []
+            payload = input_ctx.json()
+            response = self._make_request("POST", "contexts/query", payload)
+            # for ctx in response.json():
+            #    results.append(Context.parse_raw(ctx))
+        except ContextDBException as e:
+            logger.error(f"Failed to search context: {e}")
+        return results

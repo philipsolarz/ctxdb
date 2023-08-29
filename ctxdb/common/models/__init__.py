@@ -1,1 +1,1 @@
-from ctxdb.common.models.context import BaseContext, Context, InputContext
+from ctxdb.common.models.context import BaseContext, Context, InputContext, OutputContext
