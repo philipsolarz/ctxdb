@@ -1,5 +1,5 @@
 # from ..models import Namespace, Workspace, Context
-from ctxdb.common.models import BaseContext
+from ctxdb.common.models import BaseContext, Context
 # from ctxdb.server.core.config import settings
 # from docarray.index import RedisDocumentIndex, InMemoryExactNNIndex
 # from docarray.index import InMemoryExactNNIndex
@@ -35,8 +35,8 @@ class ContextDB:
         else:
             raise NotImplementedError(f"{db_type} is not supported")
 
-    def add_context(self, ctx: BaseContext):
-        if isinstance(ctx, BaseContext):
+    def add_context(self, ctx: Context):
+        if isinstance(ctx, Context):
             self._ctx_idx.index(ctx)
         else:
             raise TypeError(f"{type(ctx)} is not supported")
@@ -54,10 +54,10 @@ class ContextDB:
             raise TypeError(f"{type(ctx_id)} is not supported")
 
     def search_context(self,
-                       query: BaseContext,
+                       query: Context,
                        search_field: str,
                        limit: int = 10):
-        if isinstance(query, BaseContext):
+        if isinstance(query, Context):
             return self._ctx_idx.find(query, search_field, limit)
         else:
             raise TypeError(f"{type(query)} is not supported")

@@ -1,10 +1,16 @@
-import requests
-import json
-from ctxdb.common.models import BaseContext
 from typing import List, Union, Optional
+import json
+
+import requests
+
+from ctxdb.common.models import BaseContext
+
 
 
 class ContextDBClient:
+    """
+    ContextDBClient    
+    """
 
     def __init__(self, db_name: str, db_host: str, db_port: int, db_user: str,
                  db_password: str):
@@ -19,7 +25,7 @@ class ContextDBClient:
                                      data=payload,
                                      auth=self.auth,
                                      headers=self.headers)
-            if response.status_code == 201:
+            if response.status_code == 200:
                 return response.json().get('id')
             else:
                 print(f"Failed to add context: {response.text}")
@@ -68,6 +74,7 @@ class ContextDBClient:
             response = requests.get(f"{self.base_url}/contexts",
                                     params={"query": query},
                                     auth=self.auth)
+            print(response.status_code)
             if response.status_code == 200:
                 return [BaseContext.parse_raw(ctx) for ctx in response.json()]
             else:
