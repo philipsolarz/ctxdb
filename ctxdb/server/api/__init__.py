@@ -13,7 +13,7 @@ ctxdb = ContextDB()
 @app.post("/ctxdb/contexts", response_model=BaseContext)
 def add_context(context: BaseContext):
     try:
-        context: Context = Context(input=context.input, output=context.output, context=encode(contex.input))
+        context: Context = Context(input=context.input, output=context.output, context=encode(context.input))
         new_id = ctxdb.add_context(context)
         return {
             "id": new_id,
@@ -52,10 +52,11 @@ def update_context(idx: str, context: BaseContext):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.post("/ctxdb/contexts/query", response_model=list[BaseContext])
+@app.post("/ctxdb/contexts", response_model=list[BaseContext])
 def query_context(query: str):
     try:
-        contexts = ctxdb.query(query)
+        query = Context(input=query, embedding=encode(query))
+        contexts = ctxdb.search_context(query, "embedding")
         return contexts
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
