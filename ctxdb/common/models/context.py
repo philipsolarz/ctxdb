@@ -1,17 +1,35 @@
-from docarray import BaseDoc
+from docarray import BaseDoc, DocList
 from docarray.typing import AnyEmbedding, NdArray
-from docarray.documents import TextDoc
-from docarray import DocList
+from docarray.documents import TextDoc, ImageDoc, AudioDoc, VideoDoc
+from docarray.typing.url import TextUrl
 from typing import Optional
 
+class InputContext(TextDoc):
+    class Config:
+        orm_mode = True
+
+class Context(TextDoc):
+    class Config:
+        orm_mode = True
+    # context: Optional[NdArray[384]]
+    
+class OutputContext(TextDoc):
+    class Config:
+        orm_mode = True
 
 class BaseContext(BaseDoc):
     input: str
-    output: str
+    output: Optional[str]
 
+class FullContext(BaseContext):
+    texts: Optional[DocList[TextDoc]]
+    images: Optional[DocList[ImageDoc]]
+    audios: Optional[DocList[AudioDoc]]
+    videos: Optional[DocList[VideoDoc]]
 
-class Context(BaseContext):
-    context: NdArray[384]
+class Contexts(DocList):
+    pass
+
 
 """
 
