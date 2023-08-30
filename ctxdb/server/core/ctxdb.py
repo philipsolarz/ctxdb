@@ -1,5 +1,6 @@
 # from ..models import Namespace, Workspace, Context
-from ctxdb.common.models import Context
+
+from ctxdb.common.models import Context, Contexts
 # from ctxdb.server.core.config import settings
 # from docarray.index import RedisDocumentIndex, InMemoryExactNNIndex
 # from docarray.index import InMemoryExactNNIndex
@@ -18,14 +19,14 @@ class ContextDB:
         if db_type == "in_memory":
             try:
                 from docarray.index import InMemoryExactNNIndex
-                self._ctx_idx = InMemoryExactNNIndex[Context]()
+                self.db = InMemoryExactNNIndex[Context]()
             except ImportError:
                 raise ImportError(
                     "Please install docarray[index] to use ContextDB")
         elif db_type == "redis":
             try:
                 from docarray.index import RedisDocumentIndex
-                self._ctx_idx = RedisDocumentIndex[Context](
+                self.db = RedisDocumentIndex[Context](
                     host=host,
                     port=port,
                     password=password)
@@ -35,21 +36,27 @@ class ContextDB:
         else:
             raise NotImplementedError(f"{db_type} is not supported")
 
+    def add_contexts(self, cxts: Contexts):
+        if isinstance(cxts, Contexts):
+            self.db.index(cxts)
+        else:
+            raise TypeError(f"{type(cxts)} is not supported")
+        
     def add_context(self, ctx: Context):
         if isinstance(ctx, Context):
-            self._ctx_idx.index(ctx)
+            self.db.index(ctx)
         else:
             raise TypeError(f"{type(ctx)} is not supported")
 
     def get_context(self, ctx_id: str):
         if isinstance(ctx_id, str):
-            return self._ctx_idx[ctx_id]
+            return self.db[ctx_id]
         else:
             raise TypeError(f"{type(ctx_id)} is not supported")
 
     def delete_context(self, ctx_id: str):
         if isinstance(ctx_id, str):
-            del self._ctx_idx[ctx_id]
+            del self.db[ctx_id]
         else:
             raise TypeError(f"{type(ctx_id)} is not supported")
 
@@ -62,6 +69,19 @@ class ContextDB:
                        limit: int = 10):
         # print(ctx)
         if isinstance(ctx, Context):
-            return self._ctx_idx.find(ctx.embedding, search_field, limit)
+            return self.db.find(ctx.embedding, search_field, limit)
         else:
             raise TypeError(f"{type(ctx)} is not supported")
+        
+    def find_contexts(self, cxts: Contexts, search_field: str = "embedding", limit: int = 10):
+        if isinstance(cxts, Contexts):
+            return self.db.find_batched(cxts, search_field, limit)
+        else:
+            raise TypeError(f"{type(cxts)} is not supported")
+        
+    def filter(self, query):
+        return self.db.filter(query)
+    
+    def advanced_search(self, query):
+        query = (self.db.build_query())
+        return self.db.execute_query(query)

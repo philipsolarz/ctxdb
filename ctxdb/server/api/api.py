@@ -12,7 +12,6 @@ ctxdb = ContextDB()
 
 @app.post("/ctxdb/contexts")
 def add_context(input_ctx: InputContext):
-
     try:
         ctx = Context.from_orm(input_ctx)
         ctx.embedding = encode(ctx.text)
