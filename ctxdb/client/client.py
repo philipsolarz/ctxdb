@@ -147,8 +147,9 @@ class ContextDBClient:
 
         try:
             response = self._make_request("POST", "contexts/query", payload)
+            print(response.json())
             for ctx_data in response.json():
-                results.append(Context.from_json(ctx_data))
+                results.append(Context.parse_raw(ctx_data))
         except ContextDBException:
             pass
 

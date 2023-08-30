@@ -5,7 +5,7 @@ from ctxdb.server.core import ContextDB
 from ctxdb.common.models import InputContext, Context, OutputContext
 from ctxdb.common.utils import encode
 from config import setup_logger
-
+from typing import List
 logger = setup_logger()
 
 def encode_context(input_ctx: InputContext) -> Context:
@@ -96,7 +96,7 @@ def setup_routes(api, get_ctxdb_func):
             logger.error(f"Error in updating context: {e}")
             raise HTTPException(status_code=400, detail=str(e))
 
-    @api.post("/ctxdb/contexts/query", response_model=int)
+    @api.post("/ctxdb/contexts/query", response_model=List[Context])
     def query_context(input_ctx: InputContext, ctxdb: ContextDB = Depends(get_ctxdb_func)) -> int:
         """Query for a context.
         
@@ -110,7 +110,7 @@ def setup_routes(api, get_ctxdb_func):
         try:
             ctx = encode_context(input_ctx)
             contexts = ctxdb.search_context(ctx, "embedding")
-            return 200
+            return contexts
         except Exception as e:
             logger.error(f"Error in querying context: {e}")
             raise HTTPException(status_code=400, detail=str(e))
