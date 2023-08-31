@@ -17,14 +17,14 @@ theme:
       toggle:
         icon: material/toggle-switch-off-outline 
         name: Switch to dark mode
-      primary: teal
-      accent: purple 
+      primary: #546e7a
+      accent: #37474f 
     - scheme: slate 
       toggle:
         icon: material/toggle-switch
         name: Switch to light mode    
-      primary: teal
-      accent: lime
+      primary: #546e7a
+      accent: #37474f
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
