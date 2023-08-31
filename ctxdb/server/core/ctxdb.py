@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from typing import Any, List, Type, Union
-from ctxdb.common.models import Context, Contexts  # Make sure this import path is correct
+from ctxdb.common.models import Context, ContextList  # Make sure this import path is correct
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -11,7 +11,7 @@ class DBInterface(ABC):
     """Abstract base class for database backends."""
 
     @abstractmethod
-    def index(self, data: Union[Context, Contexts]) -> None:
+    def index(self, data: Union[Context, ContextList]) -> None:
         """Index data in the database.
         
         Args:
@@ -51,7 +51,7 @@ class InMemoryDatabase(DBInterface):
             logging.error(f"Failed to import InMemoryExactNNIndex: {e}")
             raise ImportError("Please install docarray[index] to use InMemoryDatabase")
 
-    def index(self, data: Union[Context, Contexts]) -> None:
+    def index(self, data: Union[Context, ContextList]) -> None:
         """See DBInterface.index."""
         self.db.index(data)
 
@@ -72,7 +72,7 @@ class RedisDatabase(DBInterface):
             logging.error(f"Failed to import RedisDocumentIndex: {e}")
             raise ImportError("Please install docarray[redis] to use RedisDatabase")
 
-    def index(self, data: Union[Context, Contexts]) -> None:
+    def index(self, data: Union[Context, ContextList]) -> None:
         """See DBInterface.index."""
         self.db.index(data)
 
@@ -104,7 +104,7 @@ class ContextDB:
         self.logger.info("ContextDB initialized")
 
 
-    def add_contexts(self, cxts: Contexts) -> None:
+    def add_contexts(self, cxts: ContextList) -> None:
         """
         Add multiple contexts to the database.
 
@@ -114,7 +114,7 @@ class ContextDB:
         Raises:
             TypeError: If the provided object is not of type Contexts.
         """
-        if not isinstance(cxts, Contexts):
+        if not isinstance(cxts, ContextList):
             self.logger.error("Invalid data type provided to add_contexts")
             raise TypeError(f"{type(cxts)} is not supported")
 
@@ -139,7 +139,7 @@ class ContextDB:
             if not isinstance(ctx, Context):
                 raise TypeError(f"{type(ctx)} is not supported")
             self.db.index(ctx)
-            self.logger.info(f"Context {ctx} added")
+            # self.logger.info(f"Context {ctx} added")
         except Exception as e:
             self.logger.error(f"Failed to add context: {e}")
             raise
@@ -240,14 +240,14 @@ class ContextDB:
             if limit <= 0:
                 raise ValueError("Limit must be greater than zero")
 
-            results = self.db.find(ctx.embedding, search_field, limit)
+            results, scores = self.db.find(ctx.embedding, search_field, limit)
             self.logger.info("Context search performed")
-            return results
+            return results, scores
         except Exception as e:
             self.logger.error(f"Failed to search context: {e}")
             raise
 
-    def find_contexts(self, cxts: Contexts, search_field: str = "embedding", limit: int = 10) -> Any:
+    def find_contexts(self, cxts: ContextList, search_field: str = "embedding", limit: int = 10) -> Any:
         """Find multiple contexts.
         
         Args:
@@ -264,7 +264,7 @@ class ContextDB:
             Exception: If the database operation fails.
         """
         try:
-            if not isinstance(cxts, Contexts):
+            if not isinstance(cxts, ContextList):
                 raise TypeError(f"{type(cxts)} is not supported")
             if limit <= 0:
                 raise ValueError("Limit must be greater than zero")

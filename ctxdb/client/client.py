@@ -2,10 +2,10 @@ from typing import List, Optional, Union
 import requests
 import json
 from contextlib import contextmanager
-from ctxdb.common.models import Context, InputContext
+from ctxdb.common.models import Context, InputContext, OutputContext
 from config import setup_logger
 from requests.models import Response
-
+from docarray import DocList
 logger = setup_logger()
 
 class ContextDBException(Exception):
@@ -132,7 +132,7 @@ class ContextDBClient:
         except ContextDBException:
             return False
 
-    def search_context(self, input_ctx: InputContext) -> List[Context]:
+    def search_context(self, input_ctx: InputContext) -> OutputContext:
         """
         Search for contexts that match the given InputContext.
         
@@ -140,17 +140,21 @@ class ContextDBClient:
             input_ctx (InputContext): The search criteria.
             
         Returns:
-            List[Context]: The list of matching contexts.
+            Context: The matching context.
         """
         payload = input_ctx.json()
         results = []
 
         try:
             response = self._make_request("POST", "contexts/query", payload)
-            print(response.json())
-            for ctx_data in response.json():
-                results.append(Context.parse_raw(ctx_data))
+            results = DocList[OutputContext].from_json(response.content.decode())
+            # result = Context.parse_raw(response.json())
+            print(results.summary())
+            return results
+            # print(response.json())
+            # for ctx_data in response.json():
+            #     results.append(Context.parse_raw(ctx_data))
         except ContextDBException:
             pass
-
+        
         return results
