@@ -14,6 +14,7 @@ class Context(TextDoc):
     # context: Optional[NdArray[384]]
     
 class OutputContext(TextDoc):
+    confidence: Optional[float]
     class Config:
         orm_mode = True
 
@@ -27,8 +28,9 @@ class FullContext(BaseContext):
     audios: Optional[DocList[AudioDoc]]
     videos: Optional[DocList[VideoDoc]]
 
-class Contexts(DocList):
-    pass
+class ContextList(DocList):
+    class Config:
+        orm_mode = True
 
 
 """
